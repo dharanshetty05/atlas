@@ -40,3 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+.editorconfig
+.prettierrc
+.prettierignore
+.vscode/
+commitlint.config.js
