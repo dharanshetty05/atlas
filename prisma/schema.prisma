@@ -5,3 +5,200 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+//
+// ENUMS
+//
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum DocumentStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+  ARCHIVED
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum JobType {
+  AI_ANALYSIS
+  TEXT_EXTRACTION
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+
+  UPLOAD
+  DOWNLOAD
+
+  CREATE
+  UPDATE
+  DELETE
+
+  ARCHIVE
+  RESTORE
+
+  BOOKMARK
+  REMOVE_BOOKMARK
+
+  SEARCH
+}
+
+//
+// MODELS
+//
+
+model User {
+  id    String  @id @default(uuid()) @db.Uuid
+  email String  @unique
+  name  String?
+  image String?
+  role  Role    @default(VIEWER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folders        Folder[]
+  documents      Document[]
+  bookmarks      Bookmark[]
+  activityLogs   ActivityLog[]
+  processingJobs ProcessingJob[]
+}
+
+model Folder {
+  id   String @id @default(uuid()) @db.Uuid
+  name String
+
+  ownerId  String  @db.Uuid
+  parentId String? @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id])
+
+  parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children Folder[] @relation("FolderHierarchy")
+
+  documents Document[]
+
+  @@index([ownerId])
+  @@index([parentId])
+}
+
+model Document {
+  id String @id @default(uuid()) @db.Uuid
+
+  title            String
+  originalFilename String
+  mimeType         String
+  fileSize         BigInt
+  storageKey       String
+
+  status DocumentStatus @default(UPLOADING)
+
+  folderId String @db.Uuid
+  ownerId  String @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folder Folder @relation(fields: [folderId], references: [id])
+  owner  User   @relation(fields: [ownerId], references: [id])
+
+  summary AISummary?
+
+  jobs ProcessingJob[]
+
+  bookmarks Bookmark[]
+
+  activities ActivityLog[]
+
+  @@index([folderId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model AISummary {
+  id String @id @default(uuid()) @db.Uuid
+
+  summary String
+
+  documentId String @unique @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  document Document @relation(fields: [documentId], references: [id])
+}
+
+model ProcessingJob {
+  id String @id @default(uuid()) @db.Uuid
+
+  type   JobType
+  status JobStatus @default(PENDING)
+
+  errorMessage String?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  documentId String  @db.Uuid
+  userId     String? @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  document Document @relation(fields: [documentId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@index([type])
+  @@index([documentId])
+}
+
+model Bookmark {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId     String @db.Uuid
+  documentId String @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@unique([userId, documentId])
+}
+
+model ActivityLog {
+  id String @id @default(uuid()) @db.Uuid
+
+  type ActivityType
+
+  metadata Json?
+
+  userId String @db.Uuid
+
+  documentId String? @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document? @relation(fields: [documentId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
