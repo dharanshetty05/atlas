@@ -61,15 +61,18 @@ enum ActivityType {
 //
 
 model User {
-  id    String  @id @default(uuid()) @db.Uuid
-  email String  @unique
-  name  String?
-  image String?
-  role  Role    @default(VIEWER)
+  id            String  @id @default(uuid()) @db.Uuid
+  email         String  @unique
+  name          String?
+  emailVerified Boolean @default(false)
+  image         String?
+  role          Role    @default(VIEWER)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  sessions       Session[]
+  accounts       Account[]
   folders        Folder[]
   documents      Document[]
   bookmarks      Bookmark[]
@@ -201,4 +204,48 @@ model ActivityLog {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(uuid()) @db.Uuid
+  accountId             String
+  providerId            String
+  userId                String    @db.Uuid
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
 }
