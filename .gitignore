@@ -45,3 +45,5 @@ next-env.d.ts
 .prettierignore
 .vscode/
 commitlint.config.js
+
+/src/generated/prisma
