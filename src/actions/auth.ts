@@ -152,3 +152,33 @@ export async function signupAction(input: SignupInput): Promise<AuthActionResult
     };
   }
 }
+
+export async function logoutAction(): Promise<AuthActionResult> {
+  try {
+    const reqHeaders = await headers();
+    const response = await auth.api.signOut({
+      headers: reqHeaders,
+      asResponse: true,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      return {
+        success: false,
+        error:
+          errorData?.message ||
+          errorData?.error?.message ||
+          "Could not sign out. Please try again.",
+      };
+    }
+
+    await setCookiesFromResponse(response);
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "An unexpected error occurred while signing out.",
+    };
+  }
+}
+
