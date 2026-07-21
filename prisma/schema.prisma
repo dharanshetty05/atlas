@@ -71,6 +71,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  workspace      Workspace?
   sessions       Session[]
   accounts       Account[]
   folders        Folder[]
@@ -80,25 +81,44 @@ model User {
   processingJobs ProcessingJob[]
 }
 
+model Workspace {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  ownerId   String   @unique @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  folders   Folder[]
+  documents Document[]
+
+  @@index([ownerId])
+}
+
 model Folder {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
-  ownerId  String  @db.Uuid
-  parentId String? @db.Uuid
+  workspaceId String    @db.Uuid
+  ownerId     String    @db.Uuid
+  parentId    String?   @db.Uuid
+  deletedAt   DateTime? @map("deleted_at")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner User @relation(fields: [ownerId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  owner     User      @relation(fields: [ownerId], references: [id])
 
   parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
   children Folder[] @relation("FolderHierarchy")
 
   documents Document[]
 
+  @@index([workspaceId])
   @@index([ownerId])
   @@index([parentId])
+  @@index([deletedAt])
 }
 
 model Document {
@@ -112,14 +132,17 @@ model Document {
 
   status DocumentStatus @default(UPLOADING)
 
-  folderId String @db.Uuid
-  ownerId  String @db.Uuid
+  folderId    String?   @db.Uuid
+  workspaceId String    @db.Uuid
+  ownerId     String    @db.Uuid
+  deletedAt   DateTime? @map("deleted_at")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  folder Folder @relation(fields: [folderId], references: [id])
-  owner  User   @relation(fields: [ownerId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  folder    Folder?   @relation(fields: [folderId], references: [id])
+  owner     User      @relation(fields: [ownerId], references: [id])
 
   summary AISummary?
 
@@ -129,9 +152,11 @@ model Document {
 
   activities ActivityLog[]
 
+  @@index([workspaceId])
   @@index([folderId])
   @@index([ownerId])
   @@index([status])
+  @@index([deletedAt])
 }
 
 model AISummary {

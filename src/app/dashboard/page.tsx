@@ -1,23 +1,23 @@
-import { LogoutButton } from "@/components/auth/logout-button";
 import { requireAuth } from "@/lib/auth/server";
+import { folderService } from "@/features/workspace/services/folder.service";
+import { navigationService } from "@/features/workspace/services/navigation.service";
+import { workspaceService } from "@/features/workspace/services/workspace.service";
+import { Breadcrumbs } from "@/features/workspace/components/breadcrumbs";
+import { FolderGrid } from "@/features/workspace/components/folder-grid";
 
 export default async function DashboardPage() {
   const { user } = await requireAuth();
+  const overview = await workspaceService.getWorkspaceOverview(user.id);
+
+  const [contents, tree] = await Promise.all([
+    folderService.listDirectChildren(overview.workspace.id, null),
+    navigationService.getFolderTree(overview.workspace.id),
+  ]);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-8">
-      <div className="flex items-center justify-between border-b border-neutral-200 pb-6 dark:border-neutral-800">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-            Dashboard
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Welcome back, <span className="font-medium text-neutral-900 dark:text-neutral-100">{user.name}</span>
-          </p>
-        </div>
-        <LogoutButton />
-      </div>
+    <div className="space-y-6">
+      <Breadcrumbs breadcrumbs={[]} currentFolderName={null} />
+      <FolderGrid contents={contents} workspaceId={overview.workspace.id} folderTree={tree} />
     </div>
   );
 }
-
