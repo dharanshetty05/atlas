@@ -158,6 +158,37 @@ export class DocumentService {
       },
     });
   }
+
+  /**
+   * Retrieves document metadata required for the Rich Document Viewer while strictly enforcing
+   * multi-tenant workspace authorization and verification of non-deleted status.
+   */
+  async getDocumentViewerContext(
+    workspaceId: string,
+    documentId: string,
+    userId: string
+  ): Promise<{ document: DocumentDTO }> {
+    await workspaceService.verifyWorkspaceAccess(userId, workspaceId);
+
+    const doc = await db.document.findFirst({
+      where: {
+        id: documentId,
+        workspaceId,
+        deletedAt: null,
+      },
+    });
+
+    if (!doc) {
+      throw new DocumentNotFoundError(documentId);
+    }
+
+    return {
+      document: {
+        ...doc,
+        fileSize: doc.fileSize.toString(),
+      },
+    };
+  }
 }
 
 export const documentService = new DocumentService();

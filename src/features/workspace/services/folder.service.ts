@@ -1,5 +1,4 @@
 import { MAX_FOLDER_DEPTH } from "@/constants/workspace";
-import { db } from "@/lib/db";
 import {
   CircularFolderMoveError,
   DuplicateFolderNameError,
@@ -8,6 +7,7 @@ import {
 } from "@/features/workspace/errors/workspace-errors";
 import { navigationService } from "@/features/workspace/services/navigation.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
+import type { BreadcrumbNode, FolderContentsDTO, FolderDTO } from "@/features/workspace/types";
 import type {
   CreateFolderInput,
   DeleteFolderInput,
@@ -15,7 +15,7 @@ import type {
   RenameFolderInput,
   RestoreFolderInput,
 } from "@/features/workspace/validations/folder.schema";
-import type { FolderContentsDTO, FolderDTO } from "@/features/workspace/types";
+import { db } from "@/lib/db";
 
 export class FolderService {
   /**
@@ -44,7 +44,7 @@ export class FolderService {
    */
   async listDirectChildren(workspaceId: string, parentId: string | null): Promise<FolderContentsDTO> {
     let currentFolder: FolderDTO | null = null;
-    let breadcrumbs = [];
+    let breadcrumbs: BreadcrumbNode[] = [];
 
     if (parentId) {
       currentFolder = await this.getFolderById(workspaceId, parentId);

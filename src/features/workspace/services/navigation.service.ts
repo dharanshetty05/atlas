@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { FolderNotFoundError } from "@/features/workspace/errors/workspace-errors";
 import type { BreadcrumbNode, FolderTreeNode } from "@/features/workspace/types";
+import type { AdjacentDocumentsDTO } from "@/features/documents/types/viewer.types";
 
 export class NavigationService {
   /**
@@ -126,6 +127,46 @@ export class NavigationService {
     }
 
     return roots;
+  }
+
+  /**
+   * Computes adjacent sibling documents (`prev` and `next`) within the same folder
+   * to power seamless toolbar navigation across documents.
+   */
+  async getAdjacentDocuments(
+    workspaceId: string,
+    folderId: string | null,
+    currentDocumentId: string
+  ): Promise<AdjacentDocumentsDTO> {
+    const siblings = await db.document.findMany({
+      where: {
+        workspaceId,
+        folderId,
+        deletedAt: null,
+        status: "READY",
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+      orderBy: [
+        { title: "asc" },
+        { createdAt: "asc" },
+      ],
+    });
+
+    const currentIndex = siblings.findIndex((doc) => doc.id === currentDocumentId);
+    if (currentIndex === -1) {
+      return { prev: null, next: null };
+    }
+
+    const prev = currentIndex > 0 ? siblings[currentIndex - 1] : null;
+    const next = currentIndex < siblings.length - 1 ? siblings[currentIndex + 1] : null;
+
+    return {
+      prev: prev ? { id: prev.id, title: prev.title } : null,
+      next: next ? { id: next.id, title: next.title } : null,
+    };
   }
 }
 

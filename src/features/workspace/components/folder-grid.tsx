@@ -317,16 +317,19 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                     key={doc.id}
                     className="group flex items-center justify-between px-4 py-3.5 transition hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                   >
-                    <div className="flex items-center gap-3.5 min-w-0">
+                    <Link
+                      href={`/dashboard/documents/${doc.id}`}
+                      className="flex flex-1 items-center gap-3.5 min-w-0 overflow-hidden"
+                    >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400 font-bold text-xs uppercase">
                         DOC
                       </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                      <div className="min-w-0 overflow-hidden">
+                        <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                           {doc.title}
                         </p>
                         <div className="flex items-center gap-2 text-xs text-neutral-400">
-                          <span>{doc.originalFilename}</span>
+                          <span className="truncate">{doc.originalFilename}</span>
                           <span>•</span>
                           <span>{(Number(doc.fileSize) / 1024).toFixed(1)} KB</span>
                           <span>•</span>
@@ -335,7 +338,7 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
