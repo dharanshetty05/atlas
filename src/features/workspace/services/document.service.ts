@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
 import { DocumentNotFoundError } from "@/features/workspace/errors/workspace-errors";
 import { folderService } from "@/features/workspace/services/folder.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
+import type { DocumentDTO } from "@/features/workspace/types";
 import type {
   CreateDocumentRecordInput,
   DeleteDocumentInput,
@@ -9,7 +9,7 @@ import type {
   RenameDocumentInput,
   RestoreDocumentInput,
 } from "@/features/workspace/validations/document.schema";
-import type { DocumentDTO } from "@/features/workspace/types";
+import { db } from "@/lib/db";
 
 export class DocumentService {
   /**
@@ -159,36 +159,6 @@ export class DocumentService {
     });
   }
 
-  /**
-   * Retrieves document metadata required for the Rich Document Viewer while strictly enforcing
-   * multi-tenant workspace authorization and verification of non-deleted status.
-   */
-  async getDocumentViewerContext(
-    workspaceId: string,
-    documentId: string,
-    userId: string
-  ): Promise<{ document: DocumentDTO }> {
-    await workspaceService.verifyWorkspaceAccess(userId, workspaceId);
-
-    const doc = await db.document.findFirst({
-      where: {
-        id: documentId,
-        workspaceId,
-        deletedAt: null,
-      },
-    });
-
-    if (!doc) {
-      throw new DocumentNotFoundError(documentId);
-    }
-
-    return {
-      document: {
-        ...doc,
-        fileSize: doc.fileSize.toString(),
-      },
-    };
-  }
 }
 
 export const documentService = new DocumentService();

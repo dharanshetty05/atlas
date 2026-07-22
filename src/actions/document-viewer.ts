@@ -35,8 +35,9 @@ export async function getDocumentViewerPayloadAction(
     const { user } = await requireAuth();
     const { documentId, workspaceId } = validation.data;
 
-    // 1. Retrieve domain context from DocumentService
-    const { document } = await documentService.getDocumentViewerContext(workspaceId, documentId, user.id);
+    // 1. Verify access and retrieve domain context from DocumentService
+    await workspaceService.verifyWorkspaceAccess(user.id, workspaceId);
+    const document = await documentService.getDocumentById(workspaceId, documentId);
 
     // 2. Request infrastructure read URL from StorageService and fetch navigation metadata concurrently
     const [readUrl, breadcrumbs, adjacent] = await Promise.all([

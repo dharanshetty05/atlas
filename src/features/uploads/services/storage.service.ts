@@ -25,8 +25,9 @@ export interface IStorageService {
 }
 
 export class StorageService implements IStorageService {
-  private bucketName = process.env.AWS_S3_BUCKET ?? "atlas-local-bucket";
-  private region = process.env.AWS_REGION ?? "us-east-1";
+  // To use only if S3 is implemented
+  // private bucketName = process.env.AWS_S3_BUCKET ?? "atlas-local-bucket";
+  // private region = process.env.AWS_REGION ?? "us-east-1";
 
   /**
    * Helper to return sample content URLs when running locally or during demo/testing

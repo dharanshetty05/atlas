@@ -23,8 +23,8 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
     const overview = await workspaceService.getWorkspaceOverview(user.id);
     const workspaceId = overview.workspace.id;
 
-    // 1. Retrieve domain metadata and verify multi-tenant access
-    const { document } = await documentService.getDocumentViewerContext(workspaceId, documentId, user.id);
+    // 1. Retrieve domain metadata
+    const document = await documentService.getDocumentById(workspaceId, documentId);
 
     // 2. Request infrastructure storage read URL and navigation context concurrently
     const [readUrl, breadcrumbs, adjacent] = await Promise.all([
