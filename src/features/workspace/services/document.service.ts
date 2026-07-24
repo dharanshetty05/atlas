@@ -1,7 +1,10 @@
-import { DocumentNotFoundError } from "@/features/workspace/errors/workspace-errors";
+import { DocumentNotFoundError, InvalidDocumentFileError, FolderNotFoundError } from "@/features/workspace/errors/workspace-errors";
 import { folderService } from "@/features/workspace/services/folder.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
 import type { DocumentDTO } from "@/features/workspace/types";
+import { storageService } from "@/features/uploads/services/storage.service";
+import crypto from "crypto";
+import path from "path";
 import type {
   CreateDocumentRecordInput,
   DeleteDocumentInput,
@@ -66,6 +69,84 @@ export class DocumentService {
       ...doc,
       fileSize: doc.fileSize.toString(),
     };
+  }
+
+  /**
+   * Uploads a new document file into a workspace/folder.
+   */
+  async upload(userId: string, file: File, folderId?: string | null): Promise<DocumentDTO> {
+    if (!file || file.size === 0) {
+      throw new InvalidDocumentFileError("File is empty.");
+    }
+
+    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+    if (file.size > MAX_SIZE) {
+      throw new InvalidDocumentFileError("File exceeds maximum size of 50MB.");
+    }
+
+    const mimeType = file.type || "application/octet-stream";
+    const allowedMimeTypes = [
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+      "text/plain",
+      "text/markdown",
+    ];
+    if (!allowedMimeTypes.includes(mimeType)) {
+      throw new InvalidDocumentFileError(`Unsupported file type: ${mimeType}`);
+    }
+
+    let workspaceId: string;
+    let targetFolderId = folderId ?? null;
+
+    if (targetFolderId) {
+      const folder = await db.folder.findFirst({
+        where: { id: targetFolderId, deletedAt: null },
+        select: { workspaceId: true },
+      });
+      if (!folder) {
+        throw new FolderNotFoundError(targetFolderId);
+      }
+      workspaceId = folder.workspaceId;
+    } else {
+      const personalWorkspace = await workspaceService.getOrCreatePersonalWorkspace(userId);
+      workspaceId = personalWorkspace.id;
+    }
+
+    await workspaceService.verifyWorkspaceAccess(userId, workspaceId);
+
+    const extension = path.extname(file.name) || "";
+    const storageKey = `${workspaceId}/${crypto.randomUUID()}${extension}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    await storageService.uploadObject(storageKey, buffer, mimeType);
+
+    try {
+      const doc = await db.document.create({
+        data: {
+          title: file.name,
+          originalFilename: file.name,
+          mimeType,
+          fileSize: file.size,
+          storageKey,
+          folderId: targetFolderId,
+          workspaceId,
+          ownerId: userId,
+          status: "READY",
+        },
+      });
+
+      return {
+        ...doc,
+        fileSize: doc.fileSize.toString(),
+      };
+    } catch (error) {
+      await storageService.deleteObject(storageKey);
+      throw error;
+    }
   }
 
   /**

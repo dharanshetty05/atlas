@@ -82,3 +82,12 @@ export class UnauthorizedWorkspaceAccessError extends DomainError {
     super("You do not have permission to access resources in this workspace.");
   }
 }
+
+export class InvalidDocumentFileError extends DomainError {
+  readonly code = "INVALID_DOCUMENT_FILE";
+  readonly statusCode = 400;
+
+  constructor(reason: string) {
+    super(`Invalid document file: ${reason}`);
+  }
+}

@@ -1,6 +1,10 @@
 import { pino } from "pino";
+import fs from "fs";
+import path from "path";
 
 const logger = pino({ name: "StorageService" });
+
+const STORAGE_ROOT = process.env.LOCAL_STORAGE_ROOT ?? path.join(process.cwd(), ".storage");
 
 /**
  * Infrastructure interface representing object storage capabilities (`AWS S3`, `Cloudflare R2`, or local `Mock`).
@@ -22,6 +26,20 @@ export interface IStorageService {
     storageKey: string,
     originalFilename: string
   ): Promise<string>;
+
+  /**
+   * Uploads an object to the underlying storage.
+   */
+  uploadObject(
+    storageKey: string,
+    file: Buffer,
+    mimeType: string
+  ): Promise<void>;
+
+  /**
+   * Deletes an object from the underlying storage.
+   */
+  deleteObject(storageKey: string): Promise<void>;
 }
 
 export class StorageService implements IStorageService {
@@ -92,7 +110,15 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
     }
 
     logger.info({ storageKey, mimeType }, "Generating local development read URL");
-    return this.getLocalSampleDataUrl(mimeType, originalFilename);
+    
+    try {
+      const fullPath = path.join(STORAGE_ROOT, storageKey);
+      const fileBuffer = await fs.promises.readFile(fullPath);
+      return `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
+    } catch (error) {
+      logger.warn({ storageKey, error }, "Local file not found, falling back to mock data");
+      return this.getLocalSampleDataUrl(mimeType, originalFilename);
+    }
   }
 
   async generateDownloadUrl(
@@ -114,7 +140,51 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
     }
 
     logger.info({ storageKey, originalFilename }, "Generating local development download URL");
-    return this.getLocalSampleDataUrl("application/octet-stream", originalFilename);
+    
+    try {
+      const fullPath = path.join(STORAGE_ROOT, storageKey);
+      const fileBuffer = await fs.promises.readFile(fullPath);
+      return `data:application/octet-stream;base64,${fileBuffer.toString("base64")}`;
+    } catch (error) {
+      logger.warn({ storageKey, error }, "Local file not found, falling back to mock data");
+      return this.getLocalSampleDataUrl("application/octet-stream", originalFilename);
+    }
+  }
+
+  async uploadObject(
+    storageKey: string,
+    file: Buffer,
+    mimeType: string
+  ): Promise<void> {
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+      // In production with S3/R2 configured:
+      // return s3Client.send(new PutObjectCommand({ ... }))
+      return;
+    }
+
+    logger.info({ storageKey, mimeType }, "Uploading file to local storage");
+    const fullPath = path.join(STORAGE_ROOT, storageKey);
+    await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
+    await fs.promises.writeFile(fullPath, file);
+  }
+
+  async deleteObject(storageKey: string): Promise<void> {
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+      // In production with S3/R2 configured:
+      // return s3Client.send(new DeleteObjectCommand({ ... }))
+      return;
+    }
+
+    logger.info({ storageKey }, "Deleting file from local storage");
+    const fullPath = path.join(STORAGE_ROOT, storageKey);
+    try {
+      await fs.promises.unlink(fullPath);
+    } catch (error: any) {
+      if (error.code !== "ENOENT") {
+        logger.error({ storageKey, error }, "Failed to delete local file");
+        throw error;
+      }
+    }
   }
 }
 
