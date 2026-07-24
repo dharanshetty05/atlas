@@ -14,6 +14,7 @@ import {
   moveDocumentAction,
   renameDocumentAction,
 } from "@/actions/document";
+import { UploadButton } from "@/features/documents/components/upload-button";
 import type { FolderContentsDTO, FolderDTO, DocumentDTO, FolderTreeNode } from "@/features/workspace/types";
 
 interface FolderGridProps {
@@ -188,6 +189,8 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
             </svg>
             New Folder
           </button>
+
+          <UploadButton folderId={currentParentId} onError={setError} />
 
           <button
             type="button"
