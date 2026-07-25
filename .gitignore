@@ -48,4 +48,4 @@ commitlint.config.js
 
 /src/generated/prisma
 
-.storage/
+/.storage
