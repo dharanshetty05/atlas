@@ -66,7 +66,7 @@ export class FolderService {
           folderId: parentId ?? null,
           deletedAt: null,
         },
-        orderBy: { title: "asc" },
+        orderBy: { createdAt: "desc" },
       }),
     ]);
 

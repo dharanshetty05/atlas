@@ -47,3 +47,5 @@ next-env.d.ts
 commitlint.config.js
 
 /src/generated/prisma
+
+.storage

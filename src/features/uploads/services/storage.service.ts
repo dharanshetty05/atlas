@@ -1,6 +1,6 @@
-import { pino } from "pino";
 import fs from "fs";
 import path from "path";
+import { pino } from "pino";
 
 const logger = pino({ name: "StorageService" });
 
@@ -110,7 +110,7 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
     }
 
     logger.info({ storageKey, mimeType }, "Generating local development read URL");
-    
+
     try {
       const fullPath = path.join(STORAGE_ROOT, storageKey);
       const fileBuffer = await fs.promises.readFile(fullPath);
@@ -140,7 +140,7 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
     }
 
     logger.info({ storageKey, originalFilename }, "Generating local development download URL");
-    
+
     try {
       const fullPath = path.join(STORAGE_ROOT, storageKey);
       const fileBuffer = await fs.promises.readFile(fullPath);

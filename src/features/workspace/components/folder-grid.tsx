@@ -336,6 +336,8 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                           <span>•</span>
                           <span>{(Number(doc.fileSize) / 1024).toFixed(1)} KB</span>
                           <span>•</span>
+                          <span>{new Date(doc.updatedAt).toLocaleDateString()}</span>
+                          <span>•</span>
                           <span className="inline-flex items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
                             {doc.status}
                           </span>
