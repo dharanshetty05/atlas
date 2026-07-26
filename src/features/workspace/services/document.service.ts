@@ -116,7 +116,8 @@ export class DocumentService {
 
     await workspaceService.verifyWorkspaceAccess(userId, workspaceId);
 
-    const extension = path.extname(file.name) || "";
+    const sanitizedFilename = path.basename(file.name) || "untitled";
+    const extension = path.extname(sanitizedFilename) || "";
     const storageKey = `${workspaceId}/${crypto.randomUUID()}${extension}`;
 
     const arrayBuffer = await file.arrayBuffer();
@@ -127,8 +128,8 @@ export class DocumentService {
     try {
       const doc = await db.document.create({
         data: {
-          title: file.name,
-          originalFilename: file.name,
+          title: sanitizedFilename,
+          originalFilename: sanitizedFilename,
           mimeType,
           fileSize: file.size,
           storageKey,

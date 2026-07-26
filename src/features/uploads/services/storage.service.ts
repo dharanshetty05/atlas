@@ -112,7 +112,10 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
     logger.info({ storageKey, mimeType }, "Generating local development read URL");
 
     try {
-      const fullPath = path.join(STORAGE_ROOT, storageKey);
+      const fullPath = path.resolve(STORAGE_ROOT, storageKey);
+      if (!fullPath.startsWith(path.resolve(STORAGE_ROOT))) {
+        throw new Error("Invalid storage key");
+      }
       const fileBuffer = await fs.promises.readFile(fullPath);
       return `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
     } catch (error) {
@@ -142,7 +145,10 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
     logger.info({ storageKey, originalFilename }, "Generating local development download URL");
 
     try {
-      const fullPath = path.join(STORAGE_ROOT, storageKey);
+      const fullPath = path.resolve(STORAGE_ROOT, storageKey);
+      if (!fullPath.startsWith(path.resolve(STORAGE_ROOT))) {
+        throw new Error("Invalid storage key");
+      }
       const fileBuffer = await fs.promises.readFile(fullPath);
       return `data:application/octet-stream;base64,${fileBuffer.toString("base64")}`;
     } catch (error) {
@@ -163,7 +169,10 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
     }
 
     logger.info({ storageKey, mimeType }, "Uploading file to local storage");
-    const fullPath = path.join(STORAGE_ROOT, storageKey);
+    const fullPath = path.resolve(STORAGE_ROOT, storageKey);
+    if (!fullPath.startsWith(path.resolve(STORAGE_ROOT))) {
+      throw new Error("Invalid storage key");
+    }
     await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
     await fs.promises.writeFile(fullPath, file);
   }
@@ -176,7 +185,10 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
     }
 
     logger.info({ storageKey }, "Deleting file from local storage");
-    const fullPath = path.join(STORAGE_ROOT, storageKey);
+    const fullPath = path.resolve(STORAGE_ROOT, storageKey);
+    if (!fullPath.startsWith(path.resolve(STORAGE_ROOT))) {
+      throw new Error("Invalid storage key");
+    }
     try {
       await fs.promises.unlink(fullPath);
     } catch (error: any) {

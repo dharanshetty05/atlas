@@ -9,7 +9,6 @@ import {
   renameFolderAction,
 } from "@/actions/folder";
 import {
-  createDocumentRecordAction,
   deleteDocumentAction,
   moveDocumentAction,
   renameDocumentAction,
@@ -28,9 +27,8 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
   const [error, setError] = useState<string | null>(null);
 
   // Modal / action state
-  const [createType, setCreateType] = useState<"folder" | "document" | null>(null);
+  const [createType, setCreateType] = useState<"folder" | null>(null);
   const [newItemName, setNewItemName] = useState("");
-  const [newItemMimeType, setNewItemMimeType] = useState("application/pdf");
 
   // Rename modal
   const [renameTarget, setRenameTarget] = useState<{ id: string; name: string; type: "folder" | "document" } | null>(null);
@@ -60,28 +58,11 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
     if (!newItemName.trim() || isPending) return;
     setError(null);
 
-    startTransition(async () => {
       if (createType === "folder") {
         const res = await createFolderAction({
           workspaceId,
           parentId: currentParentId,
           name: newItemName.trim(),
-        });
-        if (!res.success) {
-          setError(res.error);
-        } else {
-          setCreateType(null);
-          setNewItemName("");
-        }
-      } else if (createType === "document") {
-        const res = await createDocumentRecordAction({
-          workspaceId,
-          folderId: currentParentId,
-          title: newItemName.trim(),
-          originalFilename: `${newItemName.trim()}.pdf`,
-          mimeType: newItemMimeType,
-          fileSize: BigInt(1024 * 512), // 512 KB demo size
-          storageKey: `workspace/${workspaceId}/${Date.now()}-${newItemName.trim()}`,
         });
         if (!res.success) {
           setError(res.error);
@@ -191,21 +172,6 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
           </button>
 
           <UploadButton folderId={currentParentId} onError={setError} />
-
-          <button
-            type="button"
-            onClick={() => {
-              setCreateType("document");
-              setNewItemName("");
-              setError(null);
-            }}
-            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-3.5 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-600/20 transition hover:from-indigo-500 hover:to-purple-500"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            New Document
-          </button>
         </div>
       </div>
 
@@ -401,48 +367,28 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
             className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
           >
             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
-              Create New {createType === "folder" ? "Folder" : "Document Record"}
+              Create New Folder
             </h3>
             <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-              {createType === "folder"
-                ? "Enter a unique name for your new folder inside this directory."
-                : "Create a new document metadata record inside this hierarchy."}
+              Enter a unique name for your new folder inside this directory.
             </p>
 
             <div className="mt-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                  {createType === "folder" ? "Folder Name" : "Document Title"}
+                  Folder Name
                 </label>
                 <input
                   type="text"
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
-                  placeholder={createType === "folder" ? "e.g., Q3 Strategy" : "e.g., Product Spec v1"}
+                  placeholder="e.g., Q3 Strategy"
                   required
                   disabled={isPending}
                   className="mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm text-neutral-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
                   autoFocus
                 />
               </div>
-
-              {createType === "document" && (
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                    MIME Type
-                  </label>
-                  <select
-                    value={newItemMimeType}
-                    onChange={(e) => setNewItemMimeType(e.target.value)}
-                    disabled={isPending}
-                    className="mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm text-neutral-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-                  >
-                    <option value="application/pdf">application/pdf (PDF Document)</option>
-                    <option value="text/markdown">text/markdown (Markdown)</option>
-                    <option value="text/plain">text/plain (Plain Text)</option>
-                  </select>
-                </div>
-              )}
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-3">
