@@ -1,12 +1,12 @@
 "use client";
 
+import { loginAction } from "@/actions/auth";
+import { loginSchema, type LoginInput } from "@/validations/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { loginSchema, type LoginInput } from "@/validations/auth";
-import { loginAction } from "@/actions/auth";
 
 export function LoginForm() {
   const router = useRouter();
