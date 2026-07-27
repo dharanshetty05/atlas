@@ -62,7 +62,7 @@ export async function renameDocumentAction(input: RenameDocumentInput): Promise<
     const { user } = await requireAuth();
     const doc = await documentService.renameDocument(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: doc };
   } catch (error) {
     if (error instanceof DomainError) {

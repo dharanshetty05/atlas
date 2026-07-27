@@ -1,4 +1,4 @@
-import { DocumentNotFoundError, InvalidDocumentFileError, FolderNotFoundError } from "@/features/workspace/errors/workspace-errors";
+import { DocumentNotFoundError, InvalidDocumentFileError, FolderNotFoundError, InvalidDocumentNameError } from "@/features/workspace/errors/workspace-errors";
 import { folderService } from "@/features/workspace/services/folder.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
 import type { DocumentDTO } from "@/features/workspace/types";
@@ -13,7 +13,7 @@ import type {
   RestoreDocumentInput,
 } from "@/features/workspace/validations/document.schema";
 import { db } from "@/lib/db";
-
+import { MAX_ENTITY_NAME_LENGTH } from "@/constants/workspace";
 export class DocumentService {
   /**
    * Retrieves an active document by ID inside a specific workspace.
@@ -154,17 +154,38 @@ export class DocumentService {
    * Renames a document's title (`Last Write Wins` concurrency).
    */
   async renameDocument(input: RenameDocumentInput, userId: string): Promise<DocumentDTO> {
-    await workspaceService.verifyWorkspaceAccess(userId, input.workspaceId);
-    await this.getDocumentById(input.workspaceId, input.documentId);
+    const trimmedTitle = input.title.trim();
+    if (!trimmedTitle) {
+      throw new InvalidDocumentNameError("Title cannot be empty.");
+    }
+    if (trimmedTitle.length > MAX_ENTITY_NAME_LENGTH) {
+      throw new InvalidDocumentNameError(`Title cannot exceed ${MAX_ENTITY_NAME_LENGTH} characters.`);
+    }
 
-    const doc = await db.document.update({
+    await workspaceService.verifyWorkspaceAccess(userId, input.workspaceId);
+    const doc = await this.getDocumentById(input.workspaceId, input.documentId);
+
+    const originalExt = path.extname(doc.originalFilename);
+    let finalTitle = trimmedTitle;
+    if (originalExt && !finalTitle.toLowerCase().endsWith(originalExt.toLowerCase())) {
+      finalTitle = `${finalTitle}${originalExt}`;
+    }
+
+    if (doc.title === finalTitle) {
+      return {
+        ...doc,
+        fileSize: doc.fileSize.toString(),
+      };
+    }
+
+    const updatedDoc = await db.document.update({
       where: { id: input.documentId },
-      data: { title: input.title },
+      data: { title: finalTitle },
     });
 
     return {
-      ...doc,
-      fileSize: doc.fileSize.toString(),
+      ...updatedDoc,
+      fileSize: updatedDoc.fileSize.toString(),
     };
   }
 

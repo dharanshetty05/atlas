@@ -91,3 +91,12 @@ export class InvalidDocumentFileError extends DomainError {
     super(`Invalid document file: ${reason}`);
   }
 }
+
+export class InvalidDocumentNameError extends DomainError {
+  readonly code = "INVALID_DOCUMENT_NAME";
+  readonly statusCode = 400;
+
+  constructor(reason: string) {
+    super(`Invalid document name: ${reason}`);
+  }
+}

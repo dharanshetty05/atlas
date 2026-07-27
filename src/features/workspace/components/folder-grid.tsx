@@ -1,21 +1,29 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
-import Link from "next/link";
+import {
+  deleteDocumentAction,
+  moveDocumentAction,
+  renameDocumentAction,
+} from "@/actions/document";
 import {
   createFolderAction,
   deleteFolderAction,
   moveFolderAction,
   renameFolderAction,
 } from "@/actions/folder";
-import {
-  deleteDocumentAction,
-  moveDocumentAction,
-  renameDocumentAction,
-} from "@/actions/document";
 import { UploadButton } from "@/features/documents/components/upload-button";
-import type { FolderContentsDTO, FolderDTO, DocumentDTO, FolderTreeNode } from "@/features/workspace/types";
+import type { FolderContentsDTO, FolderTreeNode } from "@/features/workspace/types";
+import Link from "next/link";
+import React, { useState, useTransition } from "react";
 
+const getBaseName = (title: string, originalFilename: string) => {
+  const extIdx = originalFilename.lastIndexOf('.');
+  const ext = extIdx !== -1 ? originalFilename.substring(extIdx) : "";
+  if (ext && title.toLowerCase().endsWith(ext.toLowerCase())) {
+    return title.slice(0, -ext.length);
+  }
+  return title;
+};
 interface FolderGridProps {
   contents: FolderContentsDTO;
   workspaceId: string;
@@ -53,7 +61,7 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
     return list;
   }, [folderTree]);
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim() || isPending) return;
     setError(null);
@@ -71,7 +79,6 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
           setNewItemName("");
         }
       }
-    });
   };
 
   const handleRename = (e: React.FormEvent) => {
@@ -315,8 +322,9 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                       <button
                         type="button"
                         onClick={() => {
-                          setRenameTarget({ id: doc.id, name: doc.title, type: "document" });
-                          setRenameName(doc.title);
+                          const baseName = getBaseName(doc.title, doc.originalFilename);
+                          setRenameTarget({ id: doc.id, name: baseName, type: "document" });
+                          setRenameName(baseName);
                         }}
                         className="rounded p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                         title="Rename"

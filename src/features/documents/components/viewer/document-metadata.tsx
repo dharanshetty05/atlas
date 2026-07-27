@@ -55,14 +55,6 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
           <p className="mt-1 font-semibold text-neutral-100 text-sm break-words">{document.title}</p>
         </div>
 
-        {/* Original Filename */}
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Original Filename</span>
-          <p className="mt-1 font-mono text-neutral-300 break-all bg-neutral-950/80 p-2 rounded border border-neutral-800/80">
-            {document.originalFilename}
-          </p>
-        </div>
-
         {/* Attributes Grid */}
         <div className="grid grid-cols-2 gap-3.5 pt-2 border-t border-neutral-800/80">
           <div>
