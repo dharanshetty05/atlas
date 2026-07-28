@@ -194,9 +194,13 @@ export class DocumentService {
    */
   async moveDocument(input: MoveDocumentInput, userId: string): Promise<DocumentDTO> {
     await workspaceService.verifyWorkspaceAccess(userId, input.workspaceId);
-    await this.getDocumentById(input.workspaceId, input.documentId);
+    const existingDoc = await this.getDocumentById(input.workspaceId, input.documentId);
 
     const targetFolderId = input.newFolderId ?? null;
+    if (existingDoc.folderId === targetFolderId) {
+      return existingDoc;
+    }
+
     if (targetFolderId) {
       await folderService.getFolderById(input.workspaceId, targetFolderId);
     }

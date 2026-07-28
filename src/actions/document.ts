@@ -89,7 +89,7 @@ export async function moveDocumentAction(input: MoveDocumentInput): Promise<Acti
     const { user } = await requireAuth();
     const doc = await documentService.moveDocument(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: doc };
   } catch (error) {
     if (error instanceof DomainError) {

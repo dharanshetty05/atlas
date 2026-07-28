@@ -254,7 +254,7 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                         type="button"
                         onClick={() => {
                           setMoveTarget({ id: folder.id, name: folder.name, type: "folder" });
-                          setSelectedDestinationId("ROOT");
+                          setSelectedDestinationId(currentParentId ?? "ROOT");
                         }}
                         className="rounded p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                         title="Move"
@@ -338,7 +338,7 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                         type="button"
                         onClick={() => {
                           setMoveTarget({ id: doc.id, name: doc.title, type: "document" });
-                          setSelectedDestinationId("ROOT");
+                          setSelectedDestinationId(currentParentId ?? "ROOT");
                         }}
                         className="rounded p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                         title="Move"
