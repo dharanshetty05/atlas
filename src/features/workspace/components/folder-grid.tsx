@@ -46,6 +46,9 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
   const [moveTarget, setMoveTarget] = useState<{ id: string; name: string; type: "folder" | "document" } | null>(null);
   const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(contents.currentFolder?.id ?? null);
 
+  // Delete modal
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; type: "folder" | "document" } | null>(null);
+
   const currentParentId = contents.currentFolder?.id ?? null;
 
   // Flatten folder tree for destination picker
@@ -133,16 +136,20 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
     });
   };
 
-  const handleDelete = (id: string, type: "folder" | "document") => {
-    if (!window.confirm(`Are you sure you want to delete this ${type}? It will be moved to the trash.`)) return;
+  const executeDelete = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deleteTarget || isPending) return;
     setError(null);
+
     startTransition(async () => {
-      if (type === "folder") {
-        const res = await deleteFolderAction({ folderId: id, workspaceId });
+      if (deleteTarget.type === "folder") {
+        const res = await deleteFolderAction({ folderId: deleteTarget.id, workspaceId });
         if (!res.success) setError(res.error);
+        else setDeleteTarget(null);
       } else {
-        const res = await deleteDocumentAction({ documentId: id, workspaceId });
+        const res = await deleteDocumentAction({ documentId: deleteTarget.id, workspaceId });
         if (!res.success) setError(res.error);
+        else setDeleteTarget(null);
       }
     });
   };
@@ -266,7 +273,7 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
 
                       <button
                         type="button"
-                        onClick={() => handleDelete(folder.id, "folder")}
+                        onClick={() => setDeleteTarget({ id: folder.id, name: folder.name, type: "folder" })}
                         className="rounded p-1.5 text-neutral-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50 dark:hover:text-rose-400"
                         title="Delete"
                       >
@@ -355,7 +362,7 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
 
                       <button
                         type="button"
-                        onClick={() => handleDelete(doc.id, "document")}
+                        onClick={() => setDeleteTarget({ id: doc.id, name: doc.title, type: "document" })}
                         className="rounded p-1.5 text-neutral-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50 dark:hover:text-rose-400"
                         title="Delete"
                       >
@@ -522,6 +529,43 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                 className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500 disabled:opacity-50"
               >
                 {isPending ? "Moving..." : "Move Here"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <form
+            onSubmit={executeDelete}
+            className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
+          >
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
+              Delete {deleteTarget.type === "folder" ? "Folder" : "Document"}
+            </h3>
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+              Are you sure you want to delete <span className="font-semibold text-neutral-900 dark:text-neutral-100">"{deleteTarget.name}"</span>?
+            </p>
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-500">
+              The item will be moved to the trash and hidden from normal views.
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={isPending}
+                className="rounded-xl border border-neutral-200 bg-neutral-100 px-4 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-rose-600/20 hover:bg-rose-500 disabled:opacity-50"
+              >
+                {isPending ? "Deleting..." : "Delete"}
               </button>
             </div>
           </form>
