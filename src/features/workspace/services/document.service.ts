@@ -1,4 +1,4 @@
-import { DocumentNotFoundError, InvalidDocumentFileError, FolderNotFoundError, InvalidDocumentNameError } from "@/features/workspace/errors/workspace-errors";
+import { DocumentNotFoundError, InvalidDocumentFileError, FolderNotFoundError, InvalidDocumentNameError, InvalidDocumentDestinationError } from "@/features/workspace/errors/workspace-errors";
 import { folderService } from "@/features/workspace/services/folder.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
 import type { DocumentDTO } from "@/features/workspace/types";
@@ -197,6 +197,11 @@ export class DocumentService {
     const existingDoc = await this.getDocumentById(input.workspaceId, input.documentId);
 
     const targetFolderId = input.newFolderId ?? null;
+
+    if (!targetFolderId) {
+      throw new InvalidDocumentDestinationError("Documents must reside within a folder and cannot be moved to the root directory.");
+    }
+
     if (existingDoc.folderId === targetFolderId) {
       return existingDoc;
     }

@@ -338,7 +338,12 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                         type="button"
                         onClick={() => {
                           setMoveTarget({ id: doc.id, name: doc.title, type: "document" });
-                          setSelectedDestinationId(currentParentId ?? "ROOT");
+                          if (currentParentId) {
+                            setSelectedDestinationId(currentParentId);
+                          } else {
+                            const firstFolderId = flatFolderOptions.length > 0 ? flatFolderOptions[0].id : "";
+                            setSelectedDestinationId(firstFolderId);
+                          }
                         }}
                         className="rounded p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                         title="Move"
@@ -484,12 +489,14 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
                 Destination Folder
               </label>
               <select
-                value={selectedDestinationId ?? "ROOT"}
+                value={selectedDestinationId ?? (moveTarget.type === "folder" ? "ROOT" : "")}
                 onChange={(e) => setSelectedDestinationId(e.target.value)}
                 disabled={isPending}
                 className="mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm text-neutral-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
               >
-                <option value="ROOT">Root Directory (No Parent)</option>
+                {moveTarget.type === "folder" && (
+                  <option value="ROOT">Root Directory (No Parent)</option>
+                )}
                 {flatFolderOptions
                   .filter((opt) => opt.id !== moveTarget.id)
                   .map((opt) => (
@@ -511,7 +518,7 @@ export const FolderGrid: React.FC<FolderGridProps> = ({ contents, workspaceId, f
               </button>
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || (moveTarget.type === "document" && (!selectedDestinationId || selectedDestinationId === "ROOT"))}
                 className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500 disabled:opacity-50"
               >
                 {isPending ? "Moving..." : "Move Here"}
