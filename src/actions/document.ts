@@ -35,7 +35,7 @@ export async function createDocumentRecordAction(input: CreateDocumentRecordInpu
     const { user } = await requireAuth();
     const doc = await documentService.createDocumentRecord(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: doc };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -116,7 +116,7 @@ export async function deleteDocumentAction(input: DeleteDocumentInput): Promise<
     const { user } = await requireAuth();
     await documentService.deleteDocument(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -143,7 +143,7 @@ export async function restoreDocumentAction(input: RestoreDocumentInput): Promis
     const { user } = await requireAuth();
     await documentService.restoreDocument(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof DomainError) {

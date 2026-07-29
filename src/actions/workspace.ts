@@ -75,7 +75,7 @@ export async function renameWorkspaceAction(input: RenameWorkspaceInput): Promis
       validation.data.name
     );
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: updated };
   } catch (error) {
     if (error instanceof DomainError) {

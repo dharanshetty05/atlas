@@ -63,7 +63,7 @@ export async function createFolderAction(input: CreateFolderInput): Promise<Acti
     const { user } = await requireAuth();
     const folder = await folderService.createFolder(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: folder };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -90,7 +90,7 @@ export async function renameFolderAction(input: RenameFolderInput): Promise<Acti
     const { user } = await requireAuth();
     const folder = await folderService.renameFolder(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: folder };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -117,7 +117,7 @@ export async function moveFolderAction(input: MoveFolderInput): Promise<ActionSt
     const { user } = await requireAuth();
     const folder = await folderService.moveFolder(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: folder };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -144,7 +144,7 @@ export async function deleteFolderAction(input: DeleteFolderInput): Promise<Acti
     const { user } = await requireAuth();
     await folderService.deleteFolder(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -171,7 +171,7 @@ export async function restoreFolderAction(input: RestoreFolderInput): Promise<Ac
     const { user } = await requireAuth();
     await folderService.restoreFolder(validation.data, user.id);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof DomainError) {
