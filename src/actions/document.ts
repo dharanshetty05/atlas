@@ -9,14 +9,17 @@ import {
   moveDocumentSchema,
   renameDocumentSchema,
   restoreDocumentSchema,
+  searchDocumentsSchema,
   type CreateDocumentRecordInput,
   type DeleteDocumentInput,
   type MoveDocumentInput,
   type RenameDocumentInput,
   type RestoreDocumentInput,
+  type SearchDocumentsInput,
 } from "@/features/workspace/validations/document.schema";
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/actions/workspace";
+import type { SearchResult } from "@/features/workspace/types";
 
 /**
  * Creates a new document metadata record within a workspace or folder.
@@ -150,5 +153,36 @@ export async function restoreDocumentAction(input: RestoreDocumentInput): Promis
       return { success: false, error: error.message, code: error.code };
     }
     return { success: false, error: "An unexpected error occurred while restoring the document." };
+  }
+}
+
+/**
+ * Searches for documents by title or original filename within a workspace.
+ */
+export async function searchDocumentsAction(input: SearchDocumentsInput): Promise<ActionState<SearchResult[]>> {
+  const validation = searchDocumentsSchema.safeParse(input);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: "Invalid search query.",
+      fieldErrors: validation.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  try {
+    const { user } = await requireAuth();
+    const { workspaceId, query } = validation.data;
+    const results = await documentService.searchDocuments(workspaceId, query, user.id);
+
+    return {
+      success: true,
+      data: results,
+    };
+  } catch (error) {
+    console.error("Failed to search documents:", error);
+    if (error instanceof DomainError) {
+      return { success: false, error: error.message };
+    }
+    return { success: false, error: "An unexpected error occurred while searching documents." };
   }
 }

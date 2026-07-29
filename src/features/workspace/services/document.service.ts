@@ -1,7 +1,7 @@
 import { DocumentNotFoundError, InvalidDocumentFileError, FolderNotFoundError, InvalidDocumentNameError, InvalidDocumentDestinationError } from "@/features/workspace/errors/workspace-errors";
 import { folderService } from "@/features/workspace/services/folder.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
-import type { DocumentDTO } from "@/features/workspace/types";
+import type { DocumentDTO, SearchResult } from "@/features/workspace/types";
 import { storageService } from "@/features/uploads/services/storage.service";
 import crypto from "crypto";
 import path from "path";
@@ -269,8 +269,50 @@ export class DocumentService {
         folderId: targetFolderId,
       },
     });
-  }
+  /**
+   * Searches for active documents by title or original filename within a workspace.
+   * Excludes soft-deleted documents and documents within soft-deleted folders.
+   */
+  async searchDocuments(workspaceId: string, query: string, userId: string): Promise<SearchResult[]> {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      return [];
+    }
 
+    await workspaceService.verifyWorkspaceAccess(userId, workspaceId);
+
+    const documents = await db.document.findMany({
+      where: {
+        workspaceId,
+        deletedAt: null,
+        OR: [
+          { folderId: null },
+          { folder: { deletedAt: null } }
+        ],
+        AND: [
+          {
+            OR: [
+              { title: { contains: trimmedQuery, mode: 'insensitive' } },
+              { originalFilename: { contains: trimmedQuery, mode: 'insensitive' } }
+            ]
+          }
+        ]
+      },
+      orderBy: {
+        title: 'asc',
+      },
+      take: 20,
+      select: {
+        id: true,
+        title: true,
+        originalFilename: true,
+        folderId: true,
+        updatedAt: true,
+      }
+    });
+
+    return documents;
+  }
 }
 
 export const documentService = new DocumentService();

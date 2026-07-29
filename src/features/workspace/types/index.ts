@@ -57,3 +57,11 @@ export interface FolderContentsDTO {
   folders: FolderDTO[];
   documents: DocumentDTO[];
 }
+
+export interface SearchResult {
+  id: string;
+  title: string;
+  originalFilename: string;
+  folderId: string | null;
+  updatedAt: Date;
+}

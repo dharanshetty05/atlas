@@ -46,3 +46,10 @@ export type RenameDocumentInput = z.infer<typeof renameDocumentSchema>;
 export type MoveDocumentInput = z.infer<typeof moveDocumentSchema>;
 export type DeleteDocumentInput = z.infer<typeof deleteDocumentSchema>;
 export type RestoreDocumentInput = z.infer<typeof restoreDocumentSchema>;
+
+export const searchDocumentsSchema = z.object({
+  workspaceId: z.string().uuid("Invalid workspace ID format"),
+  query: z.string().trim().max(100, "Search query cannot exceed 100 characters"),
+});
+
+export type SearchDocumentsInput = z.infer<typeof searchDocumentsSchema>;
