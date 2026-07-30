@@ -33,6 +33,7 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ workspaceId }) =
 
   // Perform search
   useEffect(() => {
+    let isActive = true;
     const trimmedQuery = debouncedQuery.trim();
     if (!trimmedQuery) {
       setResults([]);
@@ -42,13 +43,19 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ workspaceId }) =
 
     startTransition(async () => {
       const res = await searchDocumentsAction({ workspaceId, query: trimmedQuery });
-      if (res.success && res.data) {
-        setResults(res.data);
-      } else {
-        setResults([]);
+      if (isActive) {
+        if (res.success && res.data) {
+          setResults(res.data);
+        } else {
+          setResults([]);
+        }
+        setIsOpen(true);
       }
-      setIsOpen(true);
     });
+
+    return () => {
+      isActive = false;
+    };
   }, [debouncedQuery, workspaceId]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -84,9 +91,14 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ workspaceId }) =
           placeholder="Search documents..."
           className="block w-full rounded-lg border border-neutral-200 bg-white/80 py-2 pl-10 pr-10 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-neutral-800 dark:bg-neutral-900/80 dark:text-neutral-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-400 transition-all placeholder:text-neutral-400"
           autoComplete="off"
+          maxLength={100}
+          role="combobox"
+          aria-expanded={isOpen && query.trim().length > 0}
+          aria-controls="search-results"
+          aria-haspopup="listbox"
         />
         {isPending && (
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <svg className="h-4 w-4 animate-spin text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -96,9 +108,9 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ workspaceId }) =
       </div>
 
       {isOpen && query.trim() && (
-        <div className="absolute mt-1 w-full rounded-md border border-neutral-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900 z-50 py-1 max-h-60 overflow-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700">
+        <div id="search-results" role="listbox" className="absolute mt-1 w-full rounded-md border border-neutral-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900 z-50 py-1 max-h-60 overflow-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700">
           {!isPending && results.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400">
+            <div role="option" aria-disabled="true" className="px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400">
               No matching documents found.
             </div>
           ) : (
@@ -106,6 +118,7 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ workspaceId }) =
               <button
                 key={doc.id}
                 type="button"
+                role="option"
                 onClick={() => handleSelect(doc.id)}
                 className="w-full flex flex-col px-4 py-2 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:bg-neutral-100 dark:focus:bg-neutral-800 outline-none"
               >
