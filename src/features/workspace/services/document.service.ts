@@ -1,5 +1,6 @@
 import { MAX_ENTITY_NAME_LENGTH } from "@/constants/workspace";
 import { storageService } from "@/features/uploads/services/storage.service";
+import { processingService } from "@/features/processing/services/processing.service";
 import { DocumentNotFoundError, FolderNotFoundError, InvalidDocumentDestinationError, InvalidDocumentFileError, InvalidDocumentNameError } from "@/features/workspace/errors/workspace-errors";
 import { folderService } from "@/features/workspace/services/folder.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
@@ -126,18 +127,24 @@ export class DocumentService {
     await storageService.uploadObject(storageKey, buffer, mimeType);
 
     try {
-      const doc = await db.document.create({
-        data: {
-          title: sanitizedFilename,
-          originalFilename: sanitizedFilename,
-          mimeType,
-          fileSize: file.size,
-          storageKey,
-          folderId: targetFolderId,
-          workspaceId,
-          ownerId: userId,
-          status: "READY",
-        },
+      const doc = await db.$transaction(async (tx) => {
+        const createdDoc = await tx.document.create({
+          data: {
+            title: sanitizedFilename,
+            originalFilename: sanitizedFilename,
+            mimeType,
+            fileSize: file.size,
+            storageKey,
+            folderId: targetFolderId,
+            workspaceId,
+            ownerId: userId,
+            status: "READY",
+          },
+        });
+
+        await processingService.createJob(createdDoc.id, tx);
+
+        return createdDoc;
       });
 
       return {
