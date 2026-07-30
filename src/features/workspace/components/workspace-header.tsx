@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import { renameWorkspaceAction } from "@/actions/workspace";
+import { DocumentSearch } from "@/features/workspace/components/document-search";
 import type { WorkspaceOverviewDTO } from "@/features/workspace/types";
 
 interface WorkspaceHeaderProps {
@@ -33,7 +34,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ overview }) =>
   return (
     <div className="flex flex-col gap-4 border-b border-neutral-200/80 bg-white/50 px-8 py-6 backdrop-blur-md dark:border-neutral-800/80 dark:bg-neutral-900/50 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20 font-bold text-xl">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20 font-bold text-xl shrink-0">
           {overview.workspace.name.charAt(0).toUpperCase()}
         </div>
         <div>
@@ -76,7 +77,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ overview }) =>
             </div>
           ) : (
             <div className="group flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+              <h1 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 line-clamp-1">
                 {overview.workspace.name}
               </h1>
               <button
@@ -93,16 +94,19 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ overview }) =>
           )}
           {error && <p className="mt-1 text-xs text-rose-500">{error}</p>}
           <div className="mt-1 flex items-center gap-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               Active Workspace
             </span>
             <span>•</span>
-            <span>{overview.folderCount} Folders</span>
+            <span className="whitespace-nowrap">{overview.folderCount} Folders</span>
             <span>•</span>
-            <span>{overview.documentCount} Documents</span>
+            <span className="whitespace-nowrap">{overview.documentCount} Documents</span>
           </div>
         </div>
+      </div>
+      <div className="w-full sm:w-80 lg:w-96 shrink-0 z-10 flex-1 sm:flex-none">
+        <DocumentSearch workspaceId={overview.workspace.id} />
       </div>
     </div>
   );

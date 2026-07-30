@@ -1,10 +1,9 @@
-import { DocumentNotFoundError, InvalidDocumentFileError, FolderNotFoundError, InvalidDocumentNameError, InvalidDocumentDestinationError } from "@/features/workspace/errors/workspace-errors";
+import { MAX_ENTITY_NAME_LENGTH } from "@/constants/workspace";
+import { storageService } from "@/features/uploads/services/storage.service";
+import { DocumentNotFoundError, FolderNotFoundError, InvalidDocumentDestinationError, InvalidDocumentFileError, InvalidDocumentNameError } from "@/features/workspace/errors/workspace-errors";
 import { folderService } from "@/features/workspace/services/folder.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
 import type { DocumentDTO, SearchResult } from "@/features/workspace/types";
-import { storageService } from "@/features/uploads/services/storage.service";
-import crypto from "crypto";
-import path from "path";
 import type {
   CreateDocumentRecordInput,
   DeleteDocumentInput,
@@ -13,7 +12,8 @@ import type {
   RestoreDocumentInput,
 } from "@/features/workspace/validations/document.schema";
 import { db } from "@/lib/db";
-import { MAX_ENTITY_NAME_LENGTH } from "@/constants/workspace";
+import crypto from "crypto";
+import path from "path";
 export class DocumentService {
   /**
    * Retrieves an active document by ID inside a specific workspace.
@@ -269,6 +269,7 @@ export class DocumentService {
         folderId: targetFolderId,
       },
     });
+  }
   /**
    * Searches for active documents by title or original filename within a workspace.
    * Excludes soft-deleted documents and documents within soft-deleted folders.
