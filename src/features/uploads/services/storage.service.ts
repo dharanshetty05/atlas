@@ -40,6 +40,12 @@ export interface IStorageService {
    * Deletes an object from the underlying storage.
    */
   deleteObject(storageKey: string): Promise<void>;
+
+  /**
+   * Retrieves an object from storage as a Buffer.
+   * Useful for internal processing tasks like extraction.
+   */
+  getObjectBuffer(storageKey: string): Promise<Buffer>;
 }
 
 export class StorageService implements IStorageService {
@@ -196,6 +202,25 @@ Atlas is an enterprise-grade internal knowledge management platform built with:
         logger.error({ storageKey, error }, "Failed to delete local file");
         throw error;
       }
+    }
+  }
+
+  async getObjectBuffer(storageKey: string): Promise<Buffer> {
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+      throw new Error("S3 getObjectBuffer not implemented in this phase");
+    }
+
+    logger.info({ storageKey }, "Retrieving file buffer from local storage");
+    const fullPath = path.resolve(STORAGE_ROOT, storageKey);
+    if (!fullPath.startsWith(path.resolve(STORAGE_ROOT))) {
+      throw new Error("Invalid storage key");
+    }
+
+    try {
+      return await fs.promises.readFile(fullPath);
+    } catch (error) {
+      logger.error({ storageKey, error }, "Failed to read local file buffer");
+      throw error;
     }
   }
 }
