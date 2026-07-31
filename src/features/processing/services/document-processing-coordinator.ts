@@ -4,6 +4,8 @@ import { NonRetriableProcessingError, ProcessingError } from "../errors/processi
 import { processingService } from "./processing.service";
 import { storageService } from "../../uploads/services/storage.service";
 import { contentExtractionService } from "./content-extraction.service";
+import { aiProcessingService } from "./ai/ai-processing.service";
+import { AIProcessingResult } from "./ai/contracts";
 
 export class DocumentProcessingCoordinator {
   /**
@@ -12,9 +14,10 @@ export class DocumentProcessingCoordinator {
    * 1. Validate Document and Workspace existence.
    * 2. Fetch document buffer from StorageService.
    * 3. Extract content using ContentExtractionService.
-   * 4. Delegate lifecycle transitions back to ProcessingService.
+   * 4. AI Processing via AIProcessingService.
+   * 5. Delegate lifecycle transitions back to ProcessingService.
    */
-  async process(job: ProcessingJob): Promise<void> {
+  async process(job: ProcessingJob): Promise<AIProcessingResult | void> {
     try {
       // 1. Validation
       const document = await db.document.findUnique({
@@ -44,11 +47,20 @@ export class DocumentProcessingCoordinator {
         document.originalFilename
       );
 
-      // Note: We do not persist or use `extractedContent` beyond this point 
-      // in Module 2, as requested. This proves the pipeline works.
+      // 4. AI Processing
+      const aiResult = await aiProcessingService.process({
+        extractedContent,
+        documentId: job.documentId
+      });
 
-      // 4. Mark completed
+      // Note: We do not persist `aiResult` beyond this point 
+      // in Module 3, as requested. This proves the pipeline works.
+      // We return it through the orchestration flow to prepare for Module 4.
+
+      // 5. Mark completed
       await processingService.completeJob(job.id);
+      
+      return aiResult;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const isRetriable = !(error instanceof NonRetriableProcessingError);
