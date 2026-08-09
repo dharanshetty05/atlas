@@ -28,7 +28,7 @@ export const TextViewer: React.FC<TextViewerProps> = ({
 
     const loadText = async () => {
       try {
-        const res = await fetch(readUrl);
+        const res = await fetch(readUrl, { credentials: "include" });
         if (!res.ok) {
           throw new Error(`Failed to fetch text (HTTP ${res.status})`);
         }

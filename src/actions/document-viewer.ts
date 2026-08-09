@@ -5,7 +5,7 @@ import { DomainError } from "@/features/workspace/errors/workspace-errors";
 import { documentService } from "@/features/workspace/services/document.service";
 import { navigationService } from "@/features/workspace/services/navigation.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
-import { storageService } from "@/features/uploads/services/storage.service";
+import { buildDocumentContentUrl } from "@/features/documents/utils/document-content-url";
 import {
   getDocumentViewerPayloadSchema,
   getDownloadUrlSchema,
@@ -39,9 +39,9 @@ export async function getDocumentViewerPayloadAction(
     await workspaceService.verifyWorkspaceAccess(user.id, workspaceId);
     const document = await documentService.getDocumentById(workspaceId, documentId);
 
-    // 2. Request infrastructure read URL from StorageService and fetch navigation metadata concurrently
-    const [readUrl, breadcrumbs, adjacent] = await Promise.all([
-      storageService.generateReadUrl(document.storageKey, document.originalFilename, document.mimeType),
+    const readUrl = buildDocumentContentUrl(documentId);
+
+    const [breadcrumbs, adjacent] = await Promise.all([
       navigationService.getBreadcrumbs(workspaceId, document.folderId),
       navigationService.getAdjacentDocuments(workspaceId, document.folderId, documentId),
     ]);
@@ -83,9 +83,9 @@ export async function getDownloadUrlAction(
     const { documentId, workspaceId } = validation.data;
 
     await workspaceService.verifyWorkspaceAccess(user.id, workspaceId);
-    const doc = await documentService.getDocumentById(workspaceId, documentId);
+    await documentService.getDocumentById(workspaceId, documentId);
 
-    const url = await storageService.generateDownloadUrl(doc.storageKey, doc.originalFilename);
+    const url = buildDocumentContentUrl(documentId, "attachment");
 
     return {
       success: true,

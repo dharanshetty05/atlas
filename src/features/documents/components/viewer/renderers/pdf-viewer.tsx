@@ -68,7 +68,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         try {
           const loadingTask = pdfjsLib.getDocument({
             url: readUrl,
-            withCredentials: false,
+            withCredentials: true,
           });
           const doc = await loadingTask.promise;
           if (!isMounted) return;

@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth/server";
 import { documentService } from "@/features/workspace/services/document.service";
 import { navigationService } from "@/features/workspace/services/navigation.service";
 import { workspaceService } from "@/features/workspace/services/workspace.service";
-import { storageService } from "@/features/uploads/services/storage.service";
+import { buildDocumentContentUrl } from "@/features/documents/utils/document-content-url";
 import { DocumentNotFoundError } from "@/features/workspace/errors/workspace-errors";
 import { DocumentViewerShell } from "@/features/documents/components/viewer/document-viewer-shell";
 import type { DocumentViewerPayloadDTO } from "@/features/documents/types/viewer.types";
@@ -23,12 +23,15 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
     const overview = await workspaceService.getWorkspaceOverview(user.id);
     const workspaceId = overview.workspace.id;
 
+    await workspaceService.verifyWorkspaceAccess(user.id, workspaceId);
+
     // 1. Retrieve domain metadata
     const document = await documentService.getDocumentById(workspaceId, documentId);
 
-    // 2. Request infrastructure storage read URL and navigation context concurrently
-    const [readUrl, breadcrumbs, adjacent] = await Promise.all([
-      storageService.generateReadUrl(document.storageKey, document.originalFilename, document.mimeType),
+    const readUrl = buildDocumentContentUrl(documentId);
+
+    // 2. Fetch navigation context concurrently
+    const [breadcrumbs, adjacent] = await Promise.all([
       navigationService.getBreadcrumbs(workspaceId, document.folderId),
       navigationService.getAdjacentDocuments(workspaceId, document.folderId, documentId),
     ]);

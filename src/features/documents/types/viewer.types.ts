@@ -17,7 +17,7 @@ export interface AdjacentDocumentsDTO {
 }
 
 /**
- * Context containing active document metadata along with its secure infrastructure read URL.
+ * Context containing active document metadata along with its authorized content URL.
  */
 export interface DocumentViewerContextDTO {
   document: DocumentDTO;

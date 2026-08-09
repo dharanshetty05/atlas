@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   serverActions: {
-    bodySizeLimit: '10mb',
+    bodySizeLimit: '50mb',
   },
 };
 
