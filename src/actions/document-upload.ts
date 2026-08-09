@@ -11,8 +11,15 @@ import type { ActionState } from "@/actions/workspace";
  * Uploads a document to the server and creates its metadata record.
  */
 export async function uploadDocumentAction(formData: FormData): Promise<ActionState<any>> {
+  console.log("[SERVER ACTION] uploadDocumentAction invoked!");
+  console.log(`[SERVER ACTION] FormData keys: ${Array.from(formData.keys()).join(", ")}`);
+  
   const folderIdRaw = formData.get("folderId") as string | null;
   const fileRaw = formData.get("file");
+
+  if (fileRaw instanceof File) {
+    console.log(`[SERVER ACTION] File size received: ${fileRaw.size} bytes`);
+  }
 
   if (!fileRaw || !(fileRaw instanceof File)) {
     return {

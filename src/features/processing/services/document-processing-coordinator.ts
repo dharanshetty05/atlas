@@ -1,11 +1,13 @@
 import { db } from "@/lib/db";
 import { ProcessingJob } from "@prisma/client";
-import { NonRetriableProcessingError, ProcessingError } from "../errors/processing-errors";
+import { NonRetriableProcessingError } from "../errors/processing-errors";
 import { processingService } from "./processing.service";
 import { storageService } from "../../uploads/services/storage.service";
 import { contentExtractionService } from "./content-extraction.service";
 import { aiProcessingService } from "./ai/ai-processing.service";
-import { AIProcessingResult } from "./ai/contracts";
+
+import { knowledgePersistenceService } from "./knowledge-persistence.service";
+import { DocumentKnowledge } from "@prisma/client";
 
 export class DocumentProcessingCoordinator {
   /**
@@ -15,9 +17,10 @@ export class DocumentProcessingCoordinator {
    * 2. Fetch document buffer from StorageService.
    * 3. Extract content using ContentExtractionService.
    * 4. AI Processing via AIProcessingService.
-   * 5. Delegate lifecycle transitions back to ProcessingService.
+   * 5. Persist AI extracted knowledge.
+   * 6. Delegate lifecycle transitions back to ProcessingService.
    */
-  async process(job: ProcessingJob): Promise<AIProcessingResult | void> {
+  async process(job: ProcessingJob): Promise<DocumentKnowledge | void> {
     try {
       // 1. Validation
       const document = await db.document.findUnique({
@@ -53,14 +56,13 @@ export class DocumentProcessingCoordinator {
         documentId: job.documentId
       });
 
-      // Note: We do not persist `aiResult` beyond this point 
-      // in Module 3, as requested. This proves the pipeline works.
-      // We return it through the orchestration flow to prepare for Module 4.
+      // 5. Persist Knowledge
+      const persistedKnowledge = await knowledgePersistenceService.persistKnowledge(job.documentId, aiResult);
 
-      // 5. Mark completed
+      // 6. Mark completed
       await processingService.completeJob(job.id);
       
-      return aiResult;
+      return persistedKnowledge;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const isRetriable = !(error instanceof NonRetriableProcessingError);
