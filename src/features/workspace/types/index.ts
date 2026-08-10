@@ -37,6 +37,10 @@ export interface DocumentDTO {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  knowledge?: {
+    summary: string;
+    keywords: string[];
+  } | null;
 }
 
 export interface WorkspaceOverviewDTO {

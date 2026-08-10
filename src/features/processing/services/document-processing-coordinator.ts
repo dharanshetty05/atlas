@@ -61,6 +61,10 @@ export class DocumentProcessingCoordinator {
 
       // 6. Mark completed
       await processingService.completeJob(job.id);
+      await db.document.update({
+        where: { id: job.documentId },
+        data: { status: "READY" }
+      });
       
       return persistedKnowledge;
     } catch (error) {
@@ -71,6 +75,10 @@ export class DocumentProcessingCoordinator {
       // Console.error is avoided as requested. A real logger could be injected.
 
       await processingService.failJob(job.id, errorMessage, isRetriable);
+      await db.document.update({
+        where: { id: job.documentId },
+        data: { status: "FAILED" }
+      });
     }
   }
 }

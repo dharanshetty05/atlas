@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
 import { getDownloadUrlAction } from "@/actions/document-viewer";
+import React, { useEffect, useState, useTransition } from "react";
 
 interface TextViewerProps {
   documentId: string;

@@ -28,6 +28,9 @@ export class DocumentService {
         workspaceId,
         deletedAt: null,
       },
+      include: {
+        knowledge: true,
+      },
     });
 
     if (!doc) {
@@ -138,13 +141,18 @@ export class DocumentService {
             folderId: targetFolderId,
             workspaceId,
             ownerId: userId,
-            status: "READY",
+            status: "PROCESSING",
           },
         });
 
         await processingService.createJob(createdDoc.id, tx);
 
         return createdDoc;
+      });
+
+      // Trigger the worker in the background
+      import("@/features/processing/workers/processing.worker").then((m) => {
+        m.processPendingJobs().catch(console.error);
       });
 
       return {

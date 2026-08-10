@@ -56,17 +56,18 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
           {documentTitle}
         </span>
 
-        {/* Status Badge */}
         <span
           className={`ml-2 hidden sm:inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0 ${
-            isReady
+            status === "READY"
               ? "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30"
-              : isArchived
-                ? "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30"
-                : "bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/30"
+              : status === "FAILED"
+              ? "bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/30"
+              : status === "PROCESSING"
+              ? "bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/30"
+              : "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30"
           }`}
         >
-          {status}
+          {status === "READY" ? "AI analysis complete" : status === "PROCESSING" ? "AI analysis in progress" : status === "FAILED" ? "AI analysis failed" : status === "UPLOADING" ? "AI analysis pending" : status}
         </span>
       </div>
 

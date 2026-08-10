@@ -80,10 +80,14 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                 className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                   document.status === "READY"
                     ? "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30"
+                    : document.status === "FAILED"
+                    ? "bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/30"
+                    : document.status === "PROCESSING"
+                    ? "bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/30"
                     : "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30"
                 }`}
               >
-                {document.status}
+                {document.status === "READY" ? "AI analysis complete" : document.status === "PROCESSING" ? "AI analysis in progress" : document.status === "FAILED" ? "AI analysis failed" : document.status === "UPLOADING" ? "AI analysis pending" : document.status}
               </span>
             </div>
           </div>
@@ -112,6 +116,27 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
             </p>
           </div>
         </div>
+
+        {/* AI Knowledge */}
+        {document.knowledge && (
+          <div className="pt-2 border-t border-neutral-800/80">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">AI Summary</span>
+            <p className="mt-1 text-xs font-medium text-neutral-200">{document.knowledge.summary}</p>
+            
+            {document.knowledge.keywords && document.knowledge.keywords.length > 0 && (
+              <div className="mt-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Keywords</span>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {document.knowledge.keywords.map((kw, i) => (
+                    <span key={i} className="inline-block rounded bg-indigo-500/10 px-2 py-0.5 text-[10px] font-semibold text-indigo-400 border border-indigo-500/30">
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Security & Audit Info */}
         <div className="pt-2 border-t border-neutral-800/80">
