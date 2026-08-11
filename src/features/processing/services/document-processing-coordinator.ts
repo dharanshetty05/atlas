@@ -8,6 +8,7 @@ import { aiProcessingService } from "./ai/ai-processing.service";
 
 import { knowledgePersistenceService } from "./knowledge-persistence.service";
 import { DocumentKnowledge } from "@prisma/client";
+import { activityService } from "../../activity/services/activity.service";
 
 export class DocumentProcessingCoordinator {
   /**
@@ -66,6 +67,13 @@ export class DocumentProcessingCoordinator {
         data: { status: "READY" }
       });
       
+      await activityService.logActivity({
+        userId: document.ownerId,
+        type: "AI_COMPLETION",
+        documentId: document.id,
+        entityName: document.title,
+      });
+
       return persistedKnowledge;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

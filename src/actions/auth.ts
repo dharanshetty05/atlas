@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { loginSchema, signupSchema, type LoginInput, type SignupInput } from "@/validations/auth";
 import { cookies, headers } from "next/headers";
+import { activityService } from "@/features/activity/services/activity.service";
 
 export type AuthActionResult = {
   success: boolean;
@@ -102,6 +103,21 @@ export async function loginAction(input: LoginInput): Promise<AuthActionResult> 
     }
 
     await setCookiesFromResponse(response);
+
+    try {
+      const responseClone = response.clone();
+      const data = await responseClone.json();
+      if (data?.user?.id) {
+        await activityService.logActivity({
+          userId: data.user.id,
+          type: "LOGIN",
+          entityName: "Login",
+        });
+      }
+    } catch (e) {
+      console.error("[Activity Logging] Failed to parse login response:", e);
+    }
+
     return { success: true };
   } catch (err) {
     return {
@@ -156,6 +172,18 @@ export async function signupAction(input: SignupInput): Promise<AuthActionResult
 export async function logoutAction(): Promise<AuthActionResult> {
   try {
     const reqHeaders = await headers();
+    
+    // Get user session before logging out for activity tracking
+    let userId: string | undefined;
+    try {
+      const sessionResponse = await auth.api.getSession({ headers: reqHeaders });
+      if (sessionResponse && sessionResponse.user) {
+        userId = sessionResponse.user.id;
+      }
+    } catch (e) {
+      // Ignore session fetch failure, just proceed with logout
+    }
+
     const response = await auth.api.signOut({
       headers: reqHeaders,
       asResponse: true,
@@ -173,6 +201,15 @@ export async function logoutAction(): Promise<AuthActionResult> {
     }
 
     await setCookiesFromResponse(response);
+    
+    if (userId) {
+      await activityService.logActivity({
+        userId,
+        type: "LOGOUT",
+        entityName: "Logout",
+      });
+    }
+
     return { success: true };
   } catch (err) {
     return {

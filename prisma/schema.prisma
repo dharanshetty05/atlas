@@ -49,6 +49,7 @@ enum ActivityType {
   REMOVE_BOOKMARK
 
   SEARCH
+  AI_COMPLETION
 }
 
 //

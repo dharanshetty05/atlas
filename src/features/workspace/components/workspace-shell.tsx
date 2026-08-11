@@ -62,9 +62,20 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
           </button>
         </div>
 
-        {/* Folder Tree Navigation */}
         <div className="flex-1 overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700">
           <FolderTree tree={tree} />
+        </div>
+
+        <div className="px-4 py-2 border-t border-neutral-200/80 dark:border-neutral-800/80">
+          <Link
+            href="/dashboard/activity"
+            className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-neutral-600 transition-all hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/50 dark:hover:text-neutral-200"
+          >
+            <svg className="h-4 w-4 shrink-0 opacity-70 transition-opacity group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Activity History
+          </Link>
         </div>
 
         {/* User Profile Footer */}

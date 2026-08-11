@@ -20,6 +20,7 @@ import {
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/actions/workspace";
 import type { SearchResult } from "@/features/workspace/types";
+import { activityService } from "@/features/activity/services/activity.service";
 
 /**
  * Creates a new document metadata record within a workspace or folder.
@@ -66,6 +67,14 @@ export async function renameDocumentAction(input: RenameDocumentInput): Promise<
     const doc = await documentService.renameDocument(validation.data, user.id);
 
     revalidatePath("/dashboard", "layout");
+    
+    await activityService.logActivity({
+      userId: user.id,
+      type: "UPDATE",
+      documentId: doc.id,
+      entityName: doc.title,
+    });
+
     return { success: true, data: doc };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -117,9 +126,21 @@ export async function deleteDocumentAction(input: DeleteDocumentInput): Promise<
 
   try {
     const { user } = await requireAuth();
+    
+    // Fetch document before deletion to capture its name for the activity log
+    const doc = await documentService.getDocumentById(validation.data.workspaceId, validation.data.documentId);
+    
     await documentService.deleteDocument(validation.data, user.id);
 
     revalidatePath("/dashboard", "layout");
+    
+    await activityService.logActivity({
+      userId: user.id,
+      type: "DELETE",
+      documentId: validation.data.documentId,
+      entityName: doc.title,
+    });
+
     return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -147,6 +168,17 @@ export async function restoreDocumentAction(input: RestoreDocumentInput): Promis
     await documentService.restoreDocument(validation.data, user.id);
 
     revalidatePath("/dashboard", "layout");
+    
+    // Fetch document after restoration to capture its name
+    const doc = await documentService.getDocumentById(validation.data.workspaceId, validation.data.documentId);
+    
+    await activityService.logActivity({
+      userId: user.id,
+      type: "RESTORE",
+      documentId: validation.data.documentId,
+      entityName: doc.title,
+    });
+
     return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -173,6 +205,18 @@ export async function searchDocumentsAction(input: SearchDocumentsInput): Promis
     const { user } = await requireAuth();
     const { workspaceId, query } = validation.data;
     const results = await documentService.searchDocuments(workspaceId, query, user.id);
+
+    if (query.trim().length >= 2) {
+      await activityService.logActivity({
+        userId: user.id,
+        type: "SEARCH",
+        entityName: "Search",
+        metadata: {
+          query: query.trim(),
+          resultCount: results.length,
+        },
+      });
+    }
 
     return {
       success: true,

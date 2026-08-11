@@ -18,6 +18,7 @@ import {
 } from "@/features/workspace/validations/folder.schema";
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/actions/workspace";
+import { activityService } from "@/features/activity/services/activity.service";
 
 /**
  * Lists immediate child folders and documents inside a specific parent folder (or workspace root).
@@ -64,6 +65,13 @@ export async function createFolderAction(input: CreateFolderInput): Promise<Acti
     const folder = await folderService.createFolder(validation.data, user.id);
 
     revalidatePath("/dashboard", "layout");
+    
+    await activityService.logActivity({
+      userId: user.id,
+      type: "CREATE",
+      entityName: folder.name,
+    });
+
     return { success: true, data: folder };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -91,6 +99,13 @@ export async function renameFolderAction(input: RenameFolderInput): Promise<Acti
     const folder = await folderService.renameFolder(validation.data, user.id);
 
     revalidatePath("/dashboard", "layout");
+    
+    await activityService.logActivity({
+      userId: user.id,
+      type: "UPDATE",
+      entityName: folder.name,
+    });
+
     return { success: true, data: folder };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -142,9 +157,19 @@ export async function deleteFolderAction(input: DeleteFolderInput): Promise<Acti
 
   try {
     const { user } = await requireAuth();
+    
+    const folder = await folderService.getFolderById(validation.data.workspaceId, validation.data.folderId);
+    
     await folderService.deleteFolder(validation.data, user.id);
 
     revalidatePath("/dashboard", "layout");
+    
+    await activityService.logActivity({
+      userId: user.id,
+      type: "DELETE",
+      entityName: folder.name,
+    });
+
     return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof DomainError) {
@@ -172,6 +197,15 @@ export async function restoreFolderAction(input: RestoreFolderInput): Promise<Ac
     await folderService.restoreFolder(validation.data, user.id);
 
     revalidatePath("/dashboard", "layout");
+    
+    const folder = await folderService.getFolderById(validation.data.workspaceId, validation.data.folderId);
+    
+    await activityService.logActivity({
+      userId: user.id,
+      type: "RESTORE",
+      entityName: folder.name,
+    });
+
     return { success: true, data: undefined };
   } catch (error) {
     if (error instanceof DomainError) {

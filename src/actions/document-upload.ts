@@ -6,6 +6,7 @@ import { documentService } from "@/features/workspace/services/document.service"
 import { uploadDocumentSchema } from "@/features/documents/validations/upload.schema";
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/actions/workspace";
+import { activityService } from "@/features/activity/services/activity.service";
 
 /**
  * Uploads a document to the server and creates its metadata record.
@@ -46,6 +47,13 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionSt
 
     revalidatePath(validation.data.folderId ? `/dashboard/folders/${validation.data.folderId}` : "/dashboard");
     
+    await activityService.logActivity({
+      userId: user.id,
+      type: "UPLOAD",
+      documentId: doc.id,
+      entityName: doc.title,
+    });
+
     return { success: true, data: doc };
   } catch (error) {
     if (error instanceof DomainError) {

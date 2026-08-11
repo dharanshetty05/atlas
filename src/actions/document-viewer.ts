@@ -14,6 +14,7 @@ import {
 } from "@/features/documents/validations/viewer.schema";
 import type { ActionState } from "@/actions/workspace";
 import type { DocumentViewerPayloadDTO } from "@/features/documents/types/viewer.types";
+import { activityService } from "@/features/activity/services/activity.service";
 
 /**
  * Retrieves the complete hydration payload for the Rich Document Viewer,
@@ -86,6 +87,15 @@ export async function getDownloadUrlAction(
     await documentService.getDocumentById(workspaceId, documentId);
 
     const url = buildDocumentContentUrl(documentId, "attachment");
+
+    const document = await documentService.getDocumentById(workspaceId, documentId);
+    
+    await activityService.logActivity({
+      userId: user.id,
+      type: "DOWNLOAD",
+      documentId,
+      entityName: document.title,
+    });
 
     return {
       success: true,
